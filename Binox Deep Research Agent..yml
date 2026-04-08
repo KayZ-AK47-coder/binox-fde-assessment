@@ -1,0 +1,397 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: Binox Deep Research Agent.
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.7.20@de0063a630a6d1b2c025fb84f3462ba5151fb60618309cd595c3f4711b1df847
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        sourceType: start
+        targetType: llm
+      id: 1775684424001-llm
+      source: '1775684424001'
+      sourceHandle: source
+      target: llm
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm-source-1775684892184-target
+      source: llm
+      sourceHandle: source
+      target: '1775684892184'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1775684892184-source-1775685684519-target
+      source: '1775684892184'
+      sourceHandle: source
+      target: '1775685684519'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1775685684519-source-1775685828878-target
+      source: '1775685684519'
+      sourceHandle: source
+      target: '1775685828878'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: User Input
+        type: start
+        variables: []
+      height: 71
+      id: '1775684424001'
+      position:
+        x: -33.680695965830694
+        y: -119.43495762933962
+      positionAbsolute:
+        x: -33.680695965830694
+        y: -119.43495762933962
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory:
+          query_prompt_template: '{{#sys.query#}}
+
+
+            {{#sys.files#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 10
+        model:
+          completion_params:
+            grounding: false
+            include_thoughts: false
+            temperature: 0.1
+          mode: chat
+          name: gemini-3-flash-preview
+          provider: langgenius/gemini/google
+        prompt_template:
+        - id: f5d260e8-5ea8-42da-8973-6b399d4f1cb7
+          role: system
+          text: You are a strict Research Planner. The user will give you a complex
+            question. Your ONLY job is to convert their question into a single, highly
+            optimized search engine query. Do not answer the question. Do not add
+            any conversational text. Output ONLY the search string.
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 86
+      id: llm
+      position:
+        x: 74.48312959182994
+        y: 1.3507818343555158
+      positionAbsolute:
+        x: 74.48312959182994
+        y: 1.3507818343555158
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        code: "from __future__ import annotations\n\nimport re\nimport sys\nimport\
+          \ textwrap\nimport urllib.parse\nimport urllib.request\nimport xml.etree.ElementTree\
+          \ as ET\nfrom html.parser import HTMLParser\nfrom typing import NamedTuple\n\
+          import ssl  # Added to handle Dify's sandbox SSL\n\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # CONFIG — tune these to fit your session budget\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          \nTOP_N_RESULTS      = 3          \nMAX_OUTPUT_CHARS   = 1_800      \nSNIPPET_MAX_CHARS\
+          \  = 400        \nREQUEST_TIMEOUT    = 8          \nUSER_AGENT         =\
+          \ (\n    \"Mozilla/5.0 (compatible; DeepResearchBot/1.0; +https://dify.ai)\"\
+          \n)\n\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # DATA TYPES\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          \nclass SearchResult(NamedTuple):\n    title:   str\n    url:     str\n\
+          \    snippet: str\n    source:  str   \n\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # UTILITY HELPERS\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          \ndef _http_get(url: str, extra_headers: dict | None = None) -> str:\n \
+          \   \"\"\"Fetch URL and return decoded body; bypasses SSL for Sandbox.\"\
+          \"\"\n    headers = {\"User-Agent\": USER_AGENT}\n    if extra_headers:\n\
+          \        headers.update(extra_headers)\n    req = urllib.request.Request(url,\
+          \ headers=headers)\n    \n    # NEW: Bypass SSL verification for Dify sandbox\n\
+          \    ctx = ssl.create_default_context()\n    ctx.check_hostname = False\n\
+          \    ctx.verify_mode = ssl.CERT_NONE\n\n    with urllib.request.urlopen(req,\
+          \ timeout=REQUEST_TIMEOUT, context=ctx) as resp:\n        charset = resp.headers.get_content_charset()\
+          \ or \"utf-8\"\n        return resp.read().decode(charset, errors=\"replace\"\
+          )\n\ndef _strip_html(raw: str) -> str:\n    class _Stripper(HTMLParser):\n\
+          \        def __init__(self):\n            super().__init__()\n         \
+          \   self.parts: list[str] = []\n\n        def handle_data(self, data: str):\n\
+          \            self.parts.append(data)\n\n    stripper = _Stripper()\n   \
+          \ stripper.feed(raw)\n    text = \" \".join(stripper.parts)\n    return\
+          \ re.sub(r\"\\s+\", \" \", text).strip()\n\ndef _compress(text: str, budget:\
+          \ int) -> str:\n    fillers = [\n        r\"\\b(click here|read more|subscribe|sign\
+          \ up|cookie policy\"\n        r\"|privacy policy|terms of (use|service)|all\
+          \ rights reserved\"\n        r\"|advertisement|sponsored|loading\\.\\.\\\
+          .)\\b\",\n    ]\n    for pattern in fillers:\n        text = re.sub(pattern,\
+          \ \"\", text, flags=re.IGNORECASE)\n\n    text = re.sub(r\"\\s+\", \" \"\
+          , text).strip()\n\n    if len(text) <= budget:\n        return text\n\n\
+          \    truncated = text[:budget]\n    last_period = max(truncated.rfind(\"\
+          .\"), truncated.rfind(\"!\"), truncated.rfind(\"?\"))\n    if last_period\
+          \ > budget // 2:\n        return truncated[: last_period + 1]\n    return\
+          \ truncated.rstrip() + \"…\"\n\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # SOURCE 1 — GOOGLE NEWS RSS\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          \ndef _fetch_google_news(query: str) -> list[SearchResult]:\n    encoded\
+          \ = urllib.parse.quote_plus(query)\n    url = (\n        f\"https://news.google.com/rss/search\"\
+          \n        f\"?q={encoded}&hl=en-US&gl=US&ceid=US:en\"\n    )\n    try:\n\
+          \        body = _http_get(url)\n    except Exception as exc:\n        print(f\"\
+          [WARN] Google News RSS failed: {exc}\", file=sys.stderr)\n        return\
+          \ []\n\n    results: list[SearchResult] = []\n    try:\n        root = ET.fromstring(body)\n\
+          \    except ET.ParseError as exc:\n        print(f\"[WARN] Google News XML\
+          \ parse error: {exc}\", file=sys.stderr)\n        return []\n\n    for item\
+          \ in root.iter(\"item\"):\n        if len(results) >= TOP_N_RESULTS:\n \
+          \           break\n\n        title_el   = item.find(\"title\")\n       \
+          \ link_el    = item.find(\"link\")\n        desc_el    = item.find(\"description\"\
+          )\n\n        title   = _strip_html(title_el.text   or \"\") if title_el\
+          \   is not None else \"\"\n        link    = (link_el.text or \"\").strip()\
+          \        if link_el    is not None else \"\"\n        snippet = _strip_html(desc_el.text\
+          \    or \"\") if desc_el    is not None else \"\"\n\n        if not title:\n\
+          \            continue\n\n        results.append(SearchResult(\n        \
+          \    title=title,\n            url=link,\n            snippet=_compress(snippet,\
+          \ SNIPPET_MAX_CHARS),\n            source=\"google_news\",\n        ))\n\
+          \n    return results\n\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # SOURCE 2 — DUCKDUCKGO HTML SCRAPE (fallback)\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          \nclass _DDGParser(HTMLParser):\n    def __init__(self):\n        super().__init__()\n\
+          \        self.results:     list[SearchResult] = []\n        self._in_result\
+          \   = False\n        self._in_title    = False\n        self._in_snippet\
+          \  = False\n        self._cur_title   = \"\"\n        self._cur_url    \
+          \ = \"\"\n        self._cur_snippet = \"\"\n        self._depth       =\
+          \ 0   \n\n    def _reset_cur(self):\n        self._cur_title = self._cur_url\
+          \ = self._cur_snippet = \"\"\n        self._in_result = self._in_title =\
+          \ self._in_snippet = False\n        self._depth = 0\n\n    def handle_starttag(self,\
+          \ tag, attrs):\n        attr_dict = dict(attrs)\n        classes   = attr_dict.get(\"\
+          class\", \"\")\n\n        if tag == \"div\" and \"result__body\" in classes:\n\
+          \            self._reset_cur()\n            self._in_result = True\n   \
+          \         return\n\n        if self._in_result:\n            if tag == \"\
+          h2\" and \"result__title\" in classes:\n                self._in_title =\
+          \ True\n            elif tag == \"a\" and self._in_title and not self._cur_url:\n\
+          \                href = attr_dict.get(\"href\", \"\")\n                parsed\
+          \ = urllib.parse.urlparse(href)\n                qs     = urllib.parse.parse_qs(parsed.query)\n\
+          \                self._cur_url = qs.get(\"uddg\", [href])\n            elif\
+          \ tag == \"div\" and \"result__snippet\" in classes:\n                self._in_snippet\
+          \ = True\n                self._depth = 1\n            elif self._in_snippet:\n\
+          \                self._depth += 1\n\n    def handle_endtag(self, tag):\n\
+          \        if self._in_snippet and tag == \"div\":\n            self._depth\
+          \ -= 1\n            if self._depth <= 0:\n                self._in_snippet\
+          \ = False\n                if self._cur_title and len(self.results) < TOP_N_RESULTS:\n\
+          \                    self.results.append(SearchResult(\n               \
+          \         title=self._cur_title.strip(),\n                        url=self._cur_url,\n\
+          \                        snippet=_compress(self._cur_snippet.strip(), SNIPPET_MAX_CHARS),\n\
+          \                        source=\"duckduckgo\",\n                    ))\n\
+          \                    self._reset_cur()\n        if tag == \"h2\":\n    \
+          \        self._in_title = False\n\n    def handle_data(self, data):\n  \
+          \      if self._in_title:\n            self._cur_title += data\n       \
+          \ elif self._in_snippet:\n            self._cur_snippet += data\n\ndef _fetch_duckduckgo(query:\
+          \ str) -> list[SearchResult]:\n    encoded = urllib.parse.quote_plus(query)\n\
+          \    url     = f\"https://html.duckduckgo.com/html/?q={encoded}\"\n    try:\n\
+          \        body = _http_get(url, extra_headers={\"Accept-Language\": \"en-US,en;q=0.9\"\
+          })\n    except Exception as exc:\n        print(f\"[WARN] DuckDuckGo fetch\
+          \ failed: {exc}\", file=sys.stderr)\n        return []\n\n    parser = _DDGParser()\n\
+          \    parser.feed(body)\n    return parser.results\n\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # AGGREGATOR\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          \ndef _gather_results(query: str) -> list[SearchResult]:\n    results =\
+          \ _fetch_google_news(query)\n    if len(results) < TOP_N_RESULTS:\n    \
+          \    ddg = _fetch_duckduckgo(query)\n        seen = {r.url for r in results}\n\
+          \        for r in ddg:\n            if r.url not in seen:\n            \
+          \    results.append(r)\n                seen.add(r.url)\n            if\
+          \ len(results) >= TOP_N_RESULTS:\n                break\n    return results[:TOP_N_RESULTS]\n\
+          \n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # OUTPUT FORMATTER\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          \ndef _format_output(query: str, results: list[SearchResult]) -> str:\n\
+          \    if not results:\n        return (\n            f\"QUERY: {query}\\\
+          n\"\n            \"SOURCES: 0\\n\"\n            \"NO_RESULTS: Could not\
+          \ retrieve data. \"\n            \"Check network access or broaden the search\
+          \ query.\"\n        )\n\n    sources_label = \", \".join(sorted({r.source\
+          \ for r in results}))\n    lines: list[str] = [\n        f\"QUERY: {query}\"\
+          ,\n        f\"SOURCES: {len(results)} | {sources_label}\",\n        \"\"\
+          ,\n    ]\n\n    for i, r in enumerate(results, 1):\n        lines.append(f\"\
+          [{i}] {r.title} ({r.source})\")\n        if r.url:\n            lines.append(f\"\
+          URL: {r.url}\")\n        if r.snippet:\n            wrapped = textwrap.fill(r.snippet,\
+          \ width=100)\n            lines.append(wrapped)\n        lines.append(\"\
+          \")   \n\n    raw = \"\\n\".join(lines).strip()\n    return _compress(raw,\
+          \ MAX_OUTPUT_CHARS)\n\ndef run(query: str) -> str:\n    query = query.strip()\n\
+          \    if not query:\n        return \"ERROR: Empty query received.\"\n\n\
+          \    results = _gather_results(query)\n    return _format_output(query,\
+          \ results)\n\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          # NEW DIFY ENTRY POINT - Handles kwargs properly\n# ──────────────────────────────────────────────────────────────────────────────\n\
+          def main(**kwargs):\n    query_val = kwargs.get(\"query\", \"\")\n    return\
+          \ {\"summary\": run(query_val)}"
+        code_language: python3
+        outputs:
+          summary:
+            children: null
+            type: string
+        selected: false
+        title: Code
+        type: code
+        variables:
+        - value_selector:
+          - llm
+          - text
+          value_type: string
+          variable: query
+      height: 50
+      id: '1775684892184'
+      position:
+        x: 193.30452039628733
+        y: 128.3248687549374
+      positionAbsolute:
+        x: 193.30452039628733
+        y: 128.3248687549374
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1775684892184'
+          - summary
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-3-flash-preview
+          provider: langgenius/gemini/google
+        prompt_template:
+        - id: df9553b6-aa12-4853-af87-5e396ded0300
+          role: system
+          text: 'You are a highly constrained Deep Research Agent. Review the search
+            results provided below. Write a concise, bulleted report answering the
+            user''s original question. You MUST stay under 500 words. Do not hallucinate;
+            only use the provided context.
+
+            USER QUESTION: {{#sys.query#}}
+
+            SEARCH RESULTS: {{#1775684892184.summary#}}'
+        selected: false
+        title: LLM 2
+        type: llm
+        vision:
+          enabled: false
+      height: 86
+      id: '1775685684519'
+      position:
+        x: 302.4683459539482
+        y: 201.743651566203
+      positionAbsolute:
+        x: 302.4683459539482
+        y: 201.743651566203
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        answer: '{{#1775685684519.text#}}'
+        selected: false
+        title: Answer
+        type: answer
+        variables: []
+      height: 101
+      id: '1775685828878'
+      position:
+        x: 437.683997670445
+        y: 323.7135649462089
+      positionAbsolute:
+        x: 437.683997670445
+        y: 323.7135649462089
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    viewport:
+      x: 156.1300517330655
+      y: 205.4876644876103
+      zoom: 0.8444705513489729
+  rag_pipeline_variables: []
