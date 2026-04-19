@@ -1,4 +1,4 @@
-# Binox FDE Assessment: Enterprise Deep Research Agent (G3)
+# Enterprise Deep Research Agent (G3)
 
 An enterprise-grade Retrieval-Augmented Generation (RAG) research agent built under strict memory, cost, and execution constraints. This workflow is designed to execute zero-cost, high-fidelity market research without exceeding strict token budgets or relying on expensive third-party search APIs.
 
